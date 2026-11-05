@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>教師工具 Teacher Console｜適性口說測驗</title>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#004030;--bg:#f4f4f4;--card:#fff;--ink:#1f2a27;--muted:#5d6b66;--line:#dcd8cf;--soft:#e9efe9;--ok:#1f6b45;--bad:#a33a2b;--on-primary:#fff}
+html.dark{--primary:#D8C3A5;--bg:#121212;--card:#1e293b;--ink:#eef0ec;--muted:#a6b0ad;--line:#334155;--soft:#24332f;--ok:#8fd3a8;--bad:#f08a78;--on-primary:#0f1f1a;color-scheme:dark}
+*{box-sizing:border-box} html{background:var(--bg)} body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,'Noto Sans TC',system-ui,sans-serif;font-size:16px;line-height:1.6}
+.wrap{max-width:960px;margin:0 auto;padding:20px 18px 40px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:24px}
+.brand{font-family:Merriweather,'Noto Sans TC',serif;font-weight:900;font-size:20px;color:var(--primary)} .brand small{display:block;font:500 13px Inter,sans-serif;color:var(--muted)}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+h2{font-family:Merriweather,'Noto Sans TC',serif;font-size:20px;margin:0 0 4px;color:var(--primary)} .hint{color:var(--muted);margin:0 0 14px;font-size:14px}
+label{font-weight:600;display:block;margin:10px 0 4px}
+input,textarea{font:inherit;width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+textarea{min-height:140px}
+.btn{font:inherit;font-weight:700;padding:10px 16px;border-radius:8px;border:0;background:var(--primary);color:var(--on-primary);cursor:pointer;min-height:42px}
+.btn.ghost{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px} @media(max-width:600px){.grid2{grid-template-columns:1fr}}
+.msg{margin-top:10px;font-weight:600;min-height:1.2em}
+.table{overflow-x:auto;margin-top:12px} table{border-collapse:collapse;width:100%;font-size:14px} th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap} th{color:var(--muted);font-weight:600}
+.ok{color:var(--ok);font-weight:700} .bad{color:var(--bad);font-weight:700}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+footer{margin-top:30px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="brand">教師工具<small>Teacher console ・ Adaptive Speaking Test</small></div>
+<button class="chip" id="themeBtn">☀︎</button></header>
+
+<section>
+  <h2>通行碼 Admin token</h2>
+  <p class="hint">輸入 Worker 設定的 ADMIN_TOKEN。只存在這個分頁，關閉即清除。</p>
+  <div class="row"><input type="password" id="token" placeholder="ADMIN_TOKEN" style="flex:1;min-width:220px"><button class="btn" id="saveToken">使用此通行碼</button></div>
+  <div class="msg" id="tokenMsg"></div>
+</section>
+
+<section>
+  <h2>1. 產生學期代碼 Semester codes</h2>
+  <p class="hint">每行貼一位學生（例如「學號 姓名」）。姓名只留在您的電腦裡，伺服器只收到代碼。</p>
+  <textarea id="roster" placeholder="112213001 王小明&#10;112213002 Lin Mei"></textarea>
+  <div class="row">
+    <button class="btn" id="genBtn">產生代碼</button>
+    <button class="btn ghost" id="mapBtn" disabled>下載對照表 CSV（只存在本機）</button>
+    <button class="btn ghost" id="uploadBtn" disabled>上傳代碼到伺服器</button>
+  </div>
+  <div class="msg" id="codeMsg"></div>
+  <div class="table" id="codeTable"></div>
+</section>
+
+<section>
+  <h2>2. 考試時段 Test window</h2>
+  <p class="hint">以您電腦的時區輸入。時段外學生無法開始測驗；3 次機會都要在同一時段內用完。</p>
+  <div class="grid2">
+    <div><label for="wStart">開始 Start</label><input type="datetime-local" id="wStart"></div>
+    <div><label for="wEnd">結束 End</label><input type="datetime-local" id="wEnd"></div>
+  </div>
+  <div class="row"><button class="btn" id="winBtn">儲存時段</button><button class="btn ghost" id="winLoad">讀取目前時段</button></div>
+  <div class="msg" id="winMsg"></div>
+</section>
+
+<section>
+  <h2>3. 測驗紀錄 Records</h2>
+  <p class="hint">伺服器上的紀錄是最可靠的成績來源。「計分」欄標示每位學生最後一次完成的場次。</p>
+  <div class="row">
+    <button class="btn" id="loadSessions">讀取紀錄</button>
+    <button class="btn ghost" id="exportLatest">下載計分場次 CSV</button>
+    <button class="btn ghost" id="exportAll">下載全部場次 CSV</button>
+  </div>
+  <div class="msg" id="sessMsg"></div>
+  <div class="table" id="sessTable"></div>
+</section>
+
+<section>
+  <h2>4. 驗證學生上傳的 CSV Verify</h2>
+  <p class="hint">從 Moodle 下載學生的 CSV，一次選多個檔案。系統會檢查簽章是否吻合、是否為該生最後一次。</p>
+  <input type="file" id="files" accept=".csv,text/csv" multiple>
+  <div class="row"><button class="btn" id="verifyBtn">開始驗證</button></div>
+  <div class="msg" id="verMsg"></div>
+  <div class="table" id="verTable"></div>
+</section>
+
+<footer><span>Architect: Prof. Shihmin Lo</span><span>CC BY-NC-SA 4.0</span></footer>
+</div>
+
+<script>
+/* ── 部署設定：請改成您的 Worker 網址 ── */
+const WORKER_URL = 'https://speaking-test.smlo.workers.dev';
+
+const $=id=>document.getElementById(id);
+let TOKEN=sessionStorage.getItem('ast_token')||''; if(TOKEN) $('token').value=TOKEN;
+let generated=[];
+$('themeBtn').onclick=()=>{const d=document.documentElement.classList.toggle('dark'); $('themeBtn').textContent=d?'☀︎':'☾';};
+$('saveToken').onclick=async()=>{ TOKEN=$('token').value.trim(); try{sessionStorage.setItem('ast_token',TOKEN)}catch(e){}
+  const r=await api('/api/admin/window'); say('tokenMsg',r.ok?'通行碼正確，已連上伺服器。':'通行碼錯誤或伺服器無法連線。',r.ok); };
+
+async function api(path,body){
+  try{ const r=await fetch(WORKER_URL+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:body?JSON.stringify(body):undefined}); return await r.json(); }
+  catch(e){ return {ok:false,error:'NETWORK'}; }
+}
+function say(id,txt,ok=true){ const e=$(id); e.textContent=txt; e.className='msg '+(ok?'ok':'bad'); }
+function table(el,head,rows){
+  const t=document.createElement('table'); const tr=document.createElement('tr');
+  head.forEach(h=>{const th=document.createElement('th'); th.textContent=h; tr.appendChild(th);}); t.appendChild(tr);
+  rows.forEach(r=>{const tr=document.createElement('tr'); r.forEach(c=>{const td=document.createElement('td'); if(c instanceof Node) td.appendChild(c); else td.textContent=c==null?'':c; tr.appendChild(td);}); t.appendChild(tr);});
+  $(el).innerHTML=''; $(el).appendChild(t);
+}
+function download(name,text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\uFEFF'+text],{type:'text/csv;charset=utf-8'})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+const cell=v=>{const s=v==null?'':String(v); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+
+/* 1 代碼：去除易混淆字元 0 O 1 I L */
+const ALPHA='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function newCode(){ const r=crypto.getRandomValues(new Uint8Array(8)); let s=''; for(let i=0;i<8;i++){ s+=ALPHA[r[i]%ALPHA.length]; if(i===3) s+='-'; } return s; }
+$('genBtn').onclick=()=>{
+  const lines=$('roster').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  if(!lines.length) return say('codeMsg','請先貼上名單。',false);
+  const seen=new Set(); generated=lines.map(l=>{let c; do{c=newCode()}while(seen.has(c)); seen.add(c); return {student:l,code:c};});
+  table('codeTable',['學生 Student','代碼 Code'],generated.map(g=>[g.student,g.code]));
+  $('mapBtn').disabled=false; $('uploadBtn').disabled=false;
+  say('codeMsg',`已產生 ${generated.length} 組代碼。請先下載對照表，再上傳代碼。`);
+};
+$('mapBtn').onclick=()=>download('semester-codes_map.csv','student,code\r\n'+generated.map(g=>cell(g.student)+','+g.code).join('\r\n'));
+$('uploadBtn').onclick=async()=>{ const r=await api('/api/admin/codes',{codes:generated.map(g=>g.code)}); say('codeMsg',r.ok?`已上傳 ${r.added} 組代碼到伺服器。`:'上傳失敗：'+r.error,r.ok); };
+
+/* 2 時段 */
+const toLocal=iso=>{const d=new Date(iso); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;};
+$('winBtn').onclick=async()=>{
+  const s=$('wStart').value,e=$('wEnd').value; if(!s||!e) return say('winMsg','請填入開始與結束時間。',false);
+  const r=await api('/api/admin/window',{start:new Date(s).toISOString(),end:new Date(e).toISOString()});
+  say('winMsg',r.ok?`已儲存：${new Date(r.window.start).toLocaleString()} 至 ${new Date(r.window.end).toLocaleString()}`:'儲存失敗：'+r.error,r.ok);
+};
+$('winLoad').onclick=async()=>{ const r=await api('/api/admin/window'); if(!r.ok) return say('winMsg','讀取失敗：'+r.error,false);
+  if(!r.window.start) return say('winMsg','尚未設定時段。',false);
+  $('wStart').value=toLocal(r.window.start); $('wEnd').value=toLocal(r.window.end);
+  say('winMsg',`目前時段：${new Date(r.window.start).toLocaleString()} 至 ${new Date(r.window.end).toLocaleString()}`); };
+
+/* 3 紀錄 */
+const LV={basic:'基本',intermediate:'中階',advanced:'進階'};
+const ST={done:'完成',active:'進行中',abandoned:'中斷／放棄',void:'已作廢'};
+$('loadSessions').onclick=async()=>{
+  const r=await api('/api/admin/sessions'); if(!r.ok) return say('sessMsg','讀取失敗：'+r.error,false);
+  table('sessTable',['代碼','次數','狀態','最終程度','該程度平均','題數','計分','開始時間',''],r.sessions.map(s=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent='作廢此場';
+    b.onclick=async()=>{ if(!confirm(`作廢 ${s.code} 第 ${s.attempt} 次？作廢後該生可多考一次。`)) return; await api('/api/admin/void',{sessionId:s.id}); $('loadSessions').click(); };
+    return [s.code,s.attempt,ST[s.status]||s.status,LV[s.finalLevel]||'',s.finalAvg??'',s.finalCount??'',s.latest?'✓':'',new Date(s.startedAt).toLocaleString(),s.status==='void'?'':b];
+  }));
+  say('sessMsg',`共 ${r.sessions.length} 場。`);
+};
+$('exportLatest').onclick=async()=>{ const r=await api('/api/admin/export?latest=1'); r.ok?download('speaking-test_scoring.csv',r.csv):say('sessMsg','下載失敗：'+r.error,false); };
+$('exportAll').onclick=async()=>{ const r=await api('/api/admin/export'); r.ok?download('speaking-test_all.csv',r.csv):say('sessMsg','下載失敗：'+r.error,false); };
+
+/* 4 驗證 */
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,''); const rows=[]; let row=[],f='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else if(c==='"') q=true; else if(c===','){row.push(f);f='';} else if(c==='\n'){row.push(f);rows.push(row);row=[];f='';} else if(c!=='\r') f+=c; }
+  if(f||row.length){row.push(f);rows.push(row);}
+  const h=rows.shift()||[]; return rows.filter(r=>r.length>1).map(r=>Object.fromEntries(h.map((k,i)=>[k.trim(),(r[i]||'').trim()])));
+}
+$('verifyBtn').onclick=async()=>{
+  const files=[...$('files').files]; if(!files.length) return say('verMsg','請先選擇 CSV 檔案。',false);
+  const groups={};
+  for(const f of files){ for(const r of parseCSV(await f.text())){ if(!r.session_id) continue;
+    const key=f.name+'|'+r.session_id;   // 以「檔案＋場次」分組，同一場次的多份檔案分開驗證
+    const g=groups[key]||(groups[key]={...r,items:[],_file:f.name});
+    g.items.push({question_order:r.question_order,question_id:r.question_id,raw_score:r.raw_score}); } }
+  const list=Object.values(groups).map(g=>{g.items.sort((a,b)=>a.question_order-b.question_order); return g;});
+  if(!list.length) return say('verMsg','檔案中找不到測驗資料，請確認是本系統下載的 CSV。',false);
+  const r=await api('/api/admin/verify',{sessions:list}); if(!r.ok) return say('verMsg','驗證失敗：'+r.error,false);
+  const mark=(ok,yes,no)=>{const s=document.createElement('span'); s.className=ok?'ok':'bad'; s.textContent=ok?yes:no; return s;};
+  table('verTable',['檔案','代碼','次數','簽章','伺服器有紀錄','是否最後一次'],r.results.map((x,i)=>[list[i]._file,x.code,list[i].attempt_number,
+    mark(x.valid,'吻合','不吻合（可能被修改）'),mark(x.inDatabase,'有','無'),mark(x.latest,'是','否（不計分）')]));
+  const bad=r.results.filter(x=>!x.valid).length;
+  say('verMsg',bad?`共 ${r.results.length} 份，${bad} 份簽章不吻合。`:`共 ${r.results.length} 份，全部吻合。`,!bad);
+};
+</script>
+</body>
+</html>

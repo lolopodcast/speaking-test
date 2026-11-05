@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>適性口說測驗 Adaptive Speaking Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ── 設計系統：BCG 學術風格（深綠 #004030 ＋ 暖金 #D8C3A5），深色預設 ── */
+:root{
+  --primary:#004030; --accent:#D8C3A5; --bg:#f4f4f4; --card:#ffffff; --ink:#1f2a27; --muted:#5d6b66;
+  --line:#dcd8cf; --soft:#e9efe9; --danger:#a33a2b; --rec:#b5452f; --on-primary:#ffffff;
+}
+html.dark{
+  --primary:#D8C3A5; --accent:#004030; --bg:#121212; --card:#1e293b; --ink:#eef0ec; --muted:#a6b0ad;
+  --line:#334155; --soft:#24332f; --danger:#f08a78; --rec:#f08a78; --on-primary:#0f1f1a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:Inter,'Noto Sans TC',system-ui,sans-serif;font-size:17px;line-height:1.65;
+  padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+::selection{background:#004030;color:#fff} html.dark ::selection{background:#D8C3A5;color:#004030}
+.wrap{max-width:720px;margin:0 auto;padding:20px 18px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 18px;border-bottom:1px solid var(--line);margin-bottom:28px;user-select:none}
+.brand{font-family:Merriweather,'Noto Sans TC',serif;font-weight:900;font-size:19px;line-height:1.3;color:var(--primary)}
+.brand small{display:block;font-family:Inter,sans-serif;font-weight:500;font-size:13px;color:var(--muted)}
+.tools{display:flex;gap:8px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+h1{font-family:Merriweather,'Noto Sans TC',serif;font-weight:900;font-size:clamp(26px,5vw,34px);line-height:1.25;margin:0 0 8px;color:var(--primary)}
+h2{font-size:20px;margin:0 0 10px}
+.lead{color:var(--muted);margin:0 0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+label{display:block;font-weight:600;margin:0 0 6px}
+input[type=text]{width:100%;font:inherit;font-size:22px;letter-spacing:.08em;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-transform:uppercase}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 0}
+.seg button{font:inherit;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed=true]{border-color:var(--primary);background:var(--soft);font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;font-size:17px;padding:13px 22px;border-radius:10px;border:0;background:var(--primary);color:var(--on-primary);cursor:pointer;min-height:48px}
+.btn.ghost{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.block{width:100%}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.err{color:var(--danger);font-weight:600;margin:14px 0 0;min-height:1.2em}
+ol.rules{padding-left:1.3em;margin:0}
+ol.rules li{margin:0 0 10px}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-weight:600}
+.check input{width:22px;height:22px;margin-top:3px;accent-color:#004030}
+.meter{height:14px;border-radius:7px;background:var(--soft);overflow:hidden;margin:16px 0 8px}
+.meter i{display:block;height:100%;width:0;background:var(--primary);transition:width .08s linear}
+/* 題目畫面 */
+.progress{display:flex;gap:6px;margin:0 0 18px}
+.progress span{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.progress span.done{background:var(--primary)} .progress span.now{background:var(--accent);outline:1.5px solid var(--primary)}
+.qmeta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:15px;margin-bottom:10px}
+.lvl{font-weight:700;color:var(--primary)}
+.prompt{font-size:clamp(20px,3.6vw,24px);line-height:1.6;font-weight:600;margin:0 0 22px}
+.phase{display:flex;align-items:center;gap:18px;padding:16px;border-radius:12px;background:var(--soft)}
+.clock{font-family:Merriweather,serif;font-weight:900;font-size:44px;line-height:1;min-width:2.4ch;text-align:right;font-variant-numeric:tabular-nums}
+.phase .what{font-weight:700} .phase .sub{color:var(--muted);font-size:14px}
+.phase.recording{background:transparent;border:2px solid var(--rec)} .phase.recording .clock{color:var(--rec)}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--rec);display:inline-block;margin-right:6px;vertical-align:middle}
+@media (prefers-reduced-motion:no-preference){.recording .dot{animation:pulse 1.2s ease-in-out infinite}}
+@keyframes pulse{50%{opacity:.25}}
+.spinner{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--primary);border-radius:50%}
+@media (prefers-reduced-motion:no-preference){.spinner{animation:spin 1s linear infinite}}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* 結果 */
+.levelhero{display:grid;grid-template-columns:auto 1fr;gap:6px 22px;align-items:end;padding:24px;border-radius:14px;background:var(--primary);color:var(--on-primary);margin-bottom:22px}
+.levelhero .big{font-family:Merriweather,'Noto Sans TC',serif;font-weight:900;font-size:clamp(40px,9vw,58px);line-height:1}
+.levelhero .k{font-size:14px;opacity:.85} .levelhero .v{font-size:22px;font-weight:700}
+.item{border-top:1px solid var(--line);padding:16px 0}
+.item:first-child{border-top:0;padding-top:0}
+.item .top{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;font-size:14px;color:var(--muted);margin:10px 0;align-items:center}
+.bars b{display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bars b i{display:block;height:100%;background:var(--primary)}
+.item p{margin:6px 0}
+details{margin-top:6px;color:var(--muted);font-size:15px} summary{cursor:pointer}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;user-select:none}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand" id="t-brand">適性口說測驗<small>Adaptive Speaking Test</small></div>
+    <div class="tools">
+      <button class="chip" id="langBtn" aria-label="Switch language">English</button>
+      <button class="chip" id="themeBtn" aria-label="Toggle theme">☀︎</button>
+    </div>
+  </header>
+
+  <!-- 1 登入 -->
+  <section id="s-login">
+    <h1 data-t="loginTitle"></h1>
+    <p class="lead" data-t="loginLead"></p>
+    <div class="card">
+      <label for="code" data-t="codeLabel"></label>
+      <input type="text" id="code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" placeholder="ABCD-2345">
+      <label style="margin-top:20px" data-t="langLabel"></label>
+      <div class="seg" role="group">
+        <button type="button" data-lang="zh" aria-pressed="true">華文題目</button>
+        <button type="button" data-lang="en" aria-pressed="false">English questions</button>
+      </div>
+      <div class="row"><button class="btn block" id="toConsent" data-t="next"></button></div>
+    </div>
+  </section>
+
+  <!-- 2 考前說明與同意 -->
+  <section id="s-consent" class="hidden">
+    <h1 data-t="consentTitle"></h1>
+    <p class="lead" data-t="consentLead"></p>
+    <div class="card">
+      <ol class="rules" id="rules"></ol>
+      <label class="check"><input type="checkbox" id="agree"><span data-t="agree"></span></label>
+      <div class="row"><button class="btn ghost" data-back="s-login" data-t="back"></button><button class="btn" id="toMic" disabled data-t="next"></button></div>
+    </div>
+  </section>
+
+  <!-- 3 麥克風測試 -->
+  <section id="s-mic" class="hidden">
+    <h1 data-t="micTitle"></h1>
+    <p class="lead" data-t="micLead"></p>
+    <div class="card">
+      <button class="btn ghost" id="micBtn" data-t="micAllow"></button>
+      <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+      <p id="micState" class="lead" style="margin:0"></p>
+      <div class="row"><button class="btn block" id="startBtn" disabled data-t="start"></button></div>
+      <p class="err" id="startErr" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- 4 作答 -->
+  <section id="s-test" class="hidden">
+    <div class="progress" id="progress"></div>
+    <div class="card">
+      <div class="qmeta"><span class="lvl" id="qLevel"></span><span id="qOrder"></span></div>
+      <p class="prompt" id="qPrompt"></p>
+      <div class="phase" id="phase">
+        <div class="clock" id="clock">15</div>
+        <div><div class="what" id="phaseWhat"></div><div class="sub" id="phaseSub"></div></div>
+      </div>
+      <div class="row">
+        <button class="btn ghost" id="speakBtn" data-t="speak"></button>
+        <button class="btn" id="skipPrep" data-t="skipPrep"></button>
+        <button class="btn hidden" id="stopBtn" data-t="stop"></button>
+      </div>
+      <p class="err" id="testErr" role="alert"></p>
+      <div class="row hidden" id="retryRow"><button class="btn" id="retryBtn" data-t="retry"></button></div>
+    </div>
+  </section>
+
+  <!-- 5 結果 -->
+  <section id="s-result" class="hidden">
+    <h1 data-t="resultTitle"></h1>
+    <p class="lead" id="resultLead"></p>
+    <div class="levelhero" id="hero"></div>
+    <div class="row" style="margin:0 0 22px"><button class="btn" id="csvBtn" data-t="download"></button></div>
+    <p class="lead" data-t="moodle"></p>
+    <h2 data-t="perItem"></h2>
+    <div class="card" id="items"></div>
+  </section>
+
+  <footer><span>Architect: Prof. Shihmin Lo</span><span>CC BY-NC-SA 4.0</span></footer>
+</div>
+
+<script>
+/* ── 部署設定：請改成您的 Worker 網址 ── */
+const WORKER_URL = 'https://speaking-test.smlo.workers.dev';
+
+/* 網域白名單 + 防嵌入 */
+(function(){
+  const ALLOWED=['lolopodcast.github.io','localhost','127.0.0.1'];
+  if(!ALLOWED.some(d=>location.hostname===d||location.hostname.endsWith('.'+d))){
+    document.body.innerHTML='<div style="text-align:center;padding:60px;font-family:sans-serif"><h1>Access Denied</h1><p>This resource is not authorised on this domain.</p></div>';
+    throw new Error('domain');
+  }
+  if(window.self!==window.top){try{window.top.location.href=window.self.location.href}catch(e){document.body.innerHTML='<h1 style="text-align:center;padding:60px">Frame Blocked</h1>'}}
+})();
+
+const T={
+ zh:{loginTitle:'開始之前',loginLead:'請輸入老師發給你的學期代碼，並選擇題目語言。作答可用華文、英文或中英混合。',
+  codeLabel:'學期代碼',langLabel:'題目語言',next:'下一步',back:'上一步',
+  consentTitle:'考前說明',consentLead:'請讀完以下規則，勾選同意後才能開始。',
+  rules:['測驗共 5 題，從基本題開始；每題依你的表現調整下一題難度。',
+   '每題先有 15 秒準備，接著自動開始錄音：基本與中階 45 秒，進階 60 秒。可提前結束作答。',
+   '只評內容與概念理解，不評發音、流暢度或使用哪種語言。',
+   '每人總共 3 次機會，以最後一次為準。',
+   '按下「開始測驗」就算用掉一次。斷線、當機、重新整理或中途離開，都算一次，請先確認網路穩定。',
+   '只能在老師設定的考試時段內作答。',
+   '你的錄音會送到外部 AI 服務（Google Gemini）轉成文字並評分。本網站不保存錄音與逐字稿；外部服務商可能依其政策短期保留資料。'],
+  agree:'我已閱讀並同意以上規則與資料處理方式',
+  micTitle:'麥克風測試',micLead:'請允許使用麥克風，對著手機或電腦說幾句話，確認聲音條會跳動。',
+  micAllow:'允許使用麥克風',micOk:'聽到你的聲音了，可以開始。',micWait:'請說幾句話……',micDenied:'無法使用麥克風。請在瀏覽器設定中允許麥克風後重新整理。',
+  start:'開始測驗（將使用一次機會）',speak:'朗讀題目',skipPrep:'準備好了，開始錄音',stop:'結束作答',
+  prep:'準備時間',prepSub:'看清楚題目，想好要說什麼',rec:'錄音中',recSub:'時間到會自動送出',
+  grading:'評分中',gradingSub:'約需 5–10 秒，請不要關閉頁面',q:'第 {n} 題，共 {t} 題',
+  retry:'重新送出這一題',resultTitle:'測驗結果',download:'下載 CSV',
+  moodle:'請把下載的 CSV 上傳到 Moodle 作業區。請勿用 Excel 修改後再存檔，以免簽章驗證失敗。',
+  perItem:'逐題回饋',finalLevel:'最終程度',avg:'該程度平均',count:'該程度題數',attemptOf:'這是第 {a} 次，共 {m} 次機會。以最後一次為準。',
+  concept:'概念正確',completeness:'完整性',reasoning:'推理',tip:'改進建議',transcript:'你說的內容（逐字稿）',
+  levels:['基本','中階','進階'],leave:'測驗進行中。離開將算用掉一次機會。',
+  err:{CODE_REQUIRED:'請輸入學期代碼。',CODE_NOT_FOUND:'找不到這個代碼，請確認是否輸入正確。',WINDOW_NOT_SET:'老師還沒有設定考試時段。',
+   WINDOW_NOT_OPEN:'考試時段還沒開始。',WINDOW_CLOSED:'考試時段已經結束。',NO_ATTEMPTS_LEFT:'3 次機會都已用完。',
+   SESSION_CLOSED:'這一場測驗已經結束或被新的一場取代。',GRADING_FAILED:'評分服務暫時沒有回應。請按「重新送出這一題」。',
+   NETWORK:'網路連線失敗。請確認網路後按「重新送出這一題」。',AUDIO_EMPTY:'沒有錄到聲音。請確認麥克風後重新送出。',
+   ORIGIN_NOT_ALLOWED:'此網址未被授權連線。',DEFAULT:'發生錯誤：'}},
+ en:{loginTitle:'Before you begin',loginLead:'Enter the semester code from your teacher and choose the question language. You may answer in Chinese, English, or a mix.',
+  codeLabel:'Semester code',langLabel:'Question language',next:'Next',back:'Back',
+  consentTitle:'Test rules',consentLead:'Read the rules below and tick the box to continue.',
+  rules:['The test has 5 questions and starts at Basic level. Each answer adjusts the difficulty of the next question.',
+   'You get 15 seconds to prepare, then recording starts automatically: 45 seconds for Basic and Intermediate, 60 seconds for Advanced. You may finish early.',
+   'Only content and understanding are scored — not pronunciation, fluency, or which language you use.',
+   'You have 3 attempts in total. Your last attempt counts.',
+   'Pressing “Start test” uses one attempt. Disconnecting, crashing, reloading, or leaving also uses one, so check your connection first.',
+   'You can only take the test during the window your teacher sets.',
+   'Your recording is sent to an external AI service (Google Gemini) to be transcribed and scored. This site does not store recordings or transcripts; the provider may retain data briefly under its own policy.'],
+  agree:'I have read and agree to the rules and data handling above',
+  micTitle:'Microphone check',micLead:'Allow microphone access and say a few words. The level bar should move.',
+  micAllow:'Allow microphone',micOk:'We can hear you. You are ready to start.',micWait:'Say a few words…',micDenied:'The microphone is blocked. Allow it in your browser settings, then reload.',
+  start:'Start test (uses one attempt)',speak:'Read question aloud',skipPrep:'Ready — start recording',stop:'Finish answer',
+  prep:'Preparation',prepSub:'Read the question and plan your answer',rec:'Recording',recSub:'Sends automatically when time is up',
+  grading:'Scoring',gradingSub:'About 5–10 seconds. Keep this page open.',q:'Question {n} of {t}',
+  retry:'Resend this answer',resultTitle:'Your results',download:'Download CSV',
+  moodle:'Upload the CSV to the Moodle assignment. Do not edit and re-save it in Excel, or the signature check will fail.',
+  perItem:'Feedback by question',finalLevel:'Final level',avg:'Average at this level',count:'Questions at this level',attemptOf:'This was attempt {a} of {m}. Your last attempt counts.',
+  concept:'Concepts',completeness:'Completeness',reasoning:'Reasoning',tip:'How to improve',transcript:'What you said (transcript)',
+  levels:['Basic','Intermediate','Advanced'],leave:'A test is in progress. Leaving will use up this attempt.',
+  err:{CODE_REQUIRED:'Enter your semester code.',CODE_NOT_FOUND:'Code not found. Check that it is typed correctly.',WINDOW_NOT_SET:'Your teacher has not set a test window yet.',
+   WINDOW_NOT_OPEN:'The test window has not opened yet.',WINDOW_CLOSED:'The test window has closed.',NO_ATTEMPTS_LEFT:'All 3 attempts have been used.',
+   SESSION_CLOSED:'This test session has ended or been replaced by a newer one.',GRADING_FAILED:'The scoring service did not respond. Press “Resend this answer”.',
+   NETWORK:'Network error. Check your connection, then press “Resend this answer”.',AUDIO_EMPTY:'No sound was recorded. Check your microphone and resend.',
+   ORIGIN_NOT_ALLOWED:'This address is not authorised.',DEFAULT:'Error: '}}
+};
+
+const S={lang:'zh',code:'',session:null,q:null,stream:null,ctx:null,analyser:null,results:[],csv:'',pending:null,inTest:false,timer:null};
+const $=id=>document.getElementById(id);
+const t=k=>T[S.lang][k];
+const fmt=(s,o)=>s.replace(/\{(\w+)\}/g,(_,k)=>o[k]);
+
+function applyLang(){
+  document.documentElement.lang=S.lang==='zh'?'zh-Hant-TW':'en-GB';
+  $('langBtn').textContent=S.lang==='zh'?'English':'華文';
+  document.querySelectorAll('[data-t]').forEach(el=>{const v=t(el.dataset.t); if(typeof v==='string') el.textContent=v;});
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===S.lang)));
+  $('rules').innerHTML=''; t('rules').forEach(r=>{const li=document.createElement('li'); li.textContent=r; $('rules').appendChild(li);});
+  if(S.q) renderQuestionText();
+}
+function show(id){['s-login','s-consent','s-mic','s-test','s-result'].forEach(s=>$(s).classList.toggle('hidden',s!==id)); window.scrollTo(0,0);}
+function errText(code,detail){const e=t('err'); return e[code]||(e.DEFAULT+(code||'')+(detail?' ('+detail+')':''));}
+
+/* 主題與語言 */
+$('themeBtn').onclick=()=>{const d=document.documentElement.classList.toggle('dark'); $('themeBtn').textContent=d?'☀︎':'☾';};
+$('langBtn').onclick=()=>{if(S.inTest) return; S.lang=S.lang==='zh'?'en':'zh'; applyLang();};
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{S.lang=b.dataset.lang; applyLang();});
+document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>show(b.dataset.back));
+
+/* 1 → 2 */
+$('toConsent').onclick=()=>{
+  S.code=$('code').value.trim();
+  if(!S.code){$('code').focus(); return;}
+  show('s-consent');
+};
+$('agree').onchange=e=>$('toMic').disabled=!e.target.checked;
+$('toMic').onclick=()=>show('s-mic');
+
+/* 3 麥克風 */
+$('micBtn').onclick=async()=>{
+  try{
+    S.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+    S.ctx=new (window.AudioContext||window.webkitAudioContext)(); await S.ctx.resume();
+    const src=S.ctx.createMediaStreamSource(S.stream); S.analyser=S.ctx.createAnalyser(); S.analyser.fftSize=512; src.connect(S.analyser);
+    $('micBtn').disabled=true; $('micState').textContent=t('micWait');
+    const buf=new Uint8Array(S.analyser.fftSize); let heard=0;
+    (function loop(){
+      S.analyser.getByteTimeDomainData(buf); let peak=0; for(const v of buf) peak=Math.max(peak,Math.abs(v-128));
+      const pct=Math.min(100,peak/64*100); $('meter').style.width=pct+'%';
+      if(pct>25){heard++; if(heard>8){$('startBtn').disabled=false; $('micState').textContent=t('micOk');}}
+      if(!S.inTest) requestAnimationFrame(loop);
+    })();
+  }catch(e){ $('micState').textContent=t('micDenied'); }
+};
+
+/* API */
+async function api(path,body){
+  let r;
+  try{ r=await fetch(WORKER_URL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+  catch(e){ return {ok:false,error:'NETWORK'}; }
+  try{ return await r.json(); }catch(e){ return {ok:false,error:'NETWORK'}; }
+}
+
+/* 開始 */
+$('startBtn').onclick=async()=>{
+  $('startBtn').disabled=true; $('startErr').textContent='';
+  const r=await api('/api/start',{code:S.code,lang:S.lang});
+  if(!r.ok){ $('startErr').textContent=errText(r.error,r.detail); $('startBtn').disabled=false; return; }
+  S.session=r; S.inTest=true; S.results=[];
+  $('langBtn').disabled=true;
+  show('s-test'); runQuestion(r.question);
+};
+window.addEventListener('beforeunload',e=>{ if(S.inTest){ e.preventDefault(); e.returnValue=t('leave'); } });
+
+/* 題目流程：準備 → 錄音 → 評分 */
+function renderQuestionText(){
+  const q=S.q; $('qLevel').textContent=t('levels')[q.level];
+  $('qOrder').textContent=fmt(t('q'),{n:q.order,t:q.total}); $('qPrompt').textContent=q.prompt;
+  $('progress').innerHTML=''; for(let i=1;i<=q.total;i++){const s=document.createElement('span'); if(i<q.order) s.className='done'; if(i===q.order) s.className='now'; $('progress').appendChild(s);}
+}
+function setPhase(kind,secs){
+  const p=$('phase'); p.classList.toggle('recording',kind==='rec');
+  $('clock').classList.toggle('hidden',kind==='grading');
+  p.querySelector('.spinner')?.remove();
+  if(kind==='grading'){const sp=document.createElement('div'); sp.className='spinner'; p.prepend(sp);}
+  $('phaseWhat').innerHTML=kind==='rec'?'<span class="dot"></span>'+t('rec'):t(kind==='prep'?'prep':'grading');
+  $('phaseSub').textContent=t(kind==='prep'?'prepSub':kind==='rec'?'recSub':'gradingSub');
+  if(secs!=null) $('clock').textContent=secs;
+}
+function countdown(secs,onDone){
+  clearInterval(S.timer); const end=Date.now()+secs*1000;
+  S.timer=setInterval(()=>{const left=Math.max(0,Math.ceil((end-Date.now())/1000)); $('clock').textContent=left; if(left<=0){clearInterval(S.timer); onDone();}},200);
+}
+function runQuestion(q){
+  S.q=q; renderQuestionText(); $('testErr').textContent=''; $('retryRow').classList.add('hidden');
+  $('speakBtn').classList.remove('hidden'); $('skipPrep').classList.remove('hidden'); $('stopBtn').classList.add('hidden');
+  setPhase('prep',q.prep);
+  countdown(q.prep,startRecording);
+  $('skipPrep').onclick=()=>{clearInterval(S.timer); startRecording();};
+}
+$('speakBtn').onclick=()=>{
+  if(!('speechSynthesis' in window)||!S.q) return;
+  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(S.q.prompt);
+  const want=S.lang==='zh'?['Yating','Mei-Jia','zh-TW']:['Daniel','en-GB'];
+  const v=speechSynthesis.getVoices(); u.voice=want.map(w=>v.find(x=>x.name.includes(w)||x.lang===w)).find(Boolean)||null;
+  u.lang=S.lang==='zh'?'zh-TW':'en-GB'; speechSynthesis.speak(u);
+};
+function startRecording(){
+  if('speechSynthesis' in window) speechSynthesis.cancel();   // 避免把朗讀錄進去
+  $('speakBtn').classList.add('hidden'); $('skipPrep').classList.add('hidden'); $('stopBtn').classList.remove('hidden');
+  const chunks=[]; const rec=new MediaRecorder(S.stream); const t0=Date.now();
+  rec.ondataavailable=e=>{if(e.data.size) chunks.push(e.data);};
+  rec.onstop=async()=>{
+    const dur=Math.round((Date.now()-t0)/1000);
+    $('stopBtn').classList.add('hidden'); setPhase('grading');
+    try{
+      const wav=await toWav16k(new Blob(chunks,{type:rec.mimeType||'audio/webm'}));
+      S.pending={sessionId:S.session.sessionId,questionId:S.q.id,order:S.q.order,durationSec:dur,audio:await toBase64(wav)};
+    }catch(e){ S.pending=null; return showSendError('AUDIO_EMPTY'); }
+    send();
+  };
+  rec.start(1000); setPhase('rec',S.q.answer);
+  countdown(S.q.answer,()=>{ if(rec.state!=='inactive') rec.stop(); });
+  $('stopBtn').onclick=()=>{clearInterval(S.timer); if(rec.state!=='inactive') rec.stop();};
+}
+async function send(){
+  $('testErr').textContent=''; $('retryRow').classList.add('hidden'); setPhase('grading');
+  const r=await api('/api/answer',S.pending);
+  if(!r.ok) return showSendError(r.error,r.detail);
+  S.results.push(r.item);
+  if(r.report){ S.inTest=false; S.csv=r.csv; renderResult(r.report); }
+  else runQuestion(r.question);
+}
+function showSendError(code,detail){
+  $('testErr').textContent=errText(code,detail);
+  if(code==='SESSION_CLOSED'){ S.inTest=false; return; }
+  if(S.pending) $('retryRow').classList.remove('hidden');
+}
+$('retryBtn').onclick=()=>send();
+
+/* 錄音轉成 16 kHz 單聲道 WAV（iOS 與 Android 格式一致） */
+async function toWav16k(blob){
+  if(!blob.size) throw new Error('empty');
+  const ab=await blob.arrayBuffer();
+  const audio=await new Promise((res,rej)=>S.ctx.decodeAudioData(ab,res,rej));
+  const rate=16000, len=Math.max(1,Math.ceil(audio.duration*rate));
+  const off=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(1,len,rate);
+  const src=off.createBufferSource(); src.buffer=audio; src.connect(off.destination); src.start();
+  const data=(await off.startRendering()).getChannelData(0);
+  let peak=0; for(let i=0;i<data.length;i+=50) peak=Math.max(peak,Math.abs(data[i]));
+  if(peak<0.01) throw new Error('silent');
+  const buf=new ArrayBuffer(44+data.length*2), v=new DataView(buf);
+  const w=(o,str)=>{for(let i=0;i<str.length;i++) v.setUint8(o+i,str.charCodeAt(i));};
+  w(0,'RIFF'); v.setUint32(4,36+data.length*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true);
+  v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,data.length*2,true);
+  for(let i=0;i<data.length;i++){const x=Math.max(-1,Math.min(1,data[i])); v.setInt16(44+i*2,x<0?x*0x8000:x*0x7fff,true);}
+  return new Blob([buf],{type:'audio/wav'});
+}
+function toBase64(blob){
+  return new Promise((res,rej)=>{const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=rej; r.readAsDataURL(blob);});
+}
+
+/* 5 結果 */
+function renderResult(rep){
+  show('s-result');
+  $('resultLead').textContent=fmt(t('attemptOf'),{a:rep.attempt,m:rep.maxAttempts});
+  const hero=$('hero'); hero.innerHTML='';
+  const add=(cls,txt,tag='div')=>{const e=document.createElement(tag); e.className=cls; e.textContent=txt; hero.appendChild(e); return e;};
+  add('big',t('levels')[rep.finalLevel]);
+  const a=document.createElement('div'); a.innerHTML='<div class="k"></div><div class="v"></div>'; a.querySelector('.k').textContent=t('avg'); a.querySelector('.v').textContent=rep.finalAvg; hero.appendChild(a);
+  const b=document.createElement('div'); b.innerHTML='<div class="k"></div><div class="v"></div>'; b.querySelector('.k').textContent=t('count'); b.querySelector('.v').textContent=rep.finalCount; hero.appendChild(b);
+  hero.style.gridTemplateColumns='auto 1fr 1fr';
+  const box=$('items'); box.innerHTML='';
+  rep.items.forEach(it=>{
+    const local=S.results.find(r=>r.order===it.order)||{};
+    const el=document.createElement('div'); el.className='item';
+    el.innerHTML='<div class="top"><span class="h"></span><span class="sc"></span></div><div class="bars"></div><p class="fb"></p><p class="tp"></p>';
+    el.querySelector('.h').textContent=fmt(t('q'),{n:it.order,t:rep.items.length})+'・'+t('levels')[it.level];
+    el.querySelector('.sc').textContent=it.score+' / 100';
+    const bars=el.querySelector('.bars');
+    [['concept',it.concept,40],['completeness',it.completeness,30],['reasoning',it.reasoning,30]].forEach(([k,val,max])=>{
+      const l=document.createElement('span'); l.textContent=t(k);
+      const bar=document.createElement('b'); const i=document.createElement('i'); i.style.width=(val/max*100)+'%'; bar.appendChild(i);
+      const n=document.createElement('span'); n.textContent=val+' / '+max; bars.append(l,bar,n);
+    });
+    el.querySelector('.fb').textContent=it.feedback||'';
+    const tp=el.querySelector('.tp'); const strong=document.createElement('strong'); strong.textContent=t('tip')+'：'; tp.append(strong,document.createTextNode(it.tip||''));
+    if(local.transcript){const d=document.createElement('details'); const sm=document.createElement('summary'); sm.textContent=t('transcript'); const p=document.createElement('p'); p.textContent=local.transcript; d.append(sm,p); el.appendChild(d);}
+    box.appendChild(el);
+  });
+  $('csvBtn').onclick=()=>{
+    const blob=new Blob(['\uFEFF'+S.csv],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=`speaking-test_${rep.code}_attempt${rep.attempt}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  };
+}
+
+applyLang();
+</script>
+</body>
+</html>
