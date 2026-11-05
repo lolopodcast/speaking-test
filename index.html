@@ -68,7 +68,7 @@ ol.rules li{margin:0 0 10px}
 @media (prefers-reduced-motion:no-preference){.spinner{animation:spin 1s linear infinite}}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* 結果 */
-.levelhero{display:grid;grid-template-columns:auto 1fr;gap:6px 22px;align-items:end;padding:24px;border-radius:14px;background:var(--primary);color:var(--on-primary);margin-bottom:22px}
+.levelhero{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 22px;align-items:end;padding:24px;border-radius:14px;background:var(--primary);color:var(--on-primary);margin-bottom:22px}
 .levelhero .big{font-family:Merriweather,'Noto Sans TC',serif;font-weight:900;font-size:clamp(40px,9vw,58px);line-height:1}
 .levelhero .k{font-size:14px;opacity:.85} .levelhero .v{font-size:22px;font-weight:700}
 .item{border-top:1px solid var(--line);padding:16px 0}
@@ -81,6 +81,30 @@ ol.rules li{margin:0 0 10px}
 details{margin-top:6px;color:var(--muted);font-size:15px} summary{cursor:pointer}
 footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;user-select:none}
 .hidden{display:none!important}
+/* 設定開關 */
+.switch{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.switch:first-of-type{border-top:0}
+.switch .lbl{font-weight:600} .switch .lbl small{display:block;font-weight:400;color:var(--muted);font-size:14px}
+.switch input{appearance:none;-webkit-appearance:none;width:48px;height:28px;border-radius:14px;background:var(--line);position:relative;cursor:pointer;flex:none;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}
+.switch input:checked{background:var(--primary)} .switch input:checked::after{left:23px}
+.notice{padding:14px 16px;border-radius:10px;background:var(--soft);margin:0 0 18px;font-weight:600}
+.notice.bad{color:var(--danger)}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 22px}
+.toolbar .switch{border:0;padding:0;margin-left:auto}
+@media (max-width:480px){
+  .levelhero{grid-template-columns:1fr 1fr;padding:20px}
+  .levelhero .big{grid-column:1/-1;margin-bottom:8px}
+  .toolbar .switch{margin-left:0;width:100%}
+}
+/* 列印／另存 PDF：一律淺色、隱藏按鈕 */
+@media print{
+  html,html.dark{--primary:#004030;--bg:#fff;--card:#fff;--ink:#111;--muted:#555;--line:#ccc;--soft:#eef2ee;--on-primary:#fff}
+  body{font-size:12pt} header .tools,.toolbar,#s-result .moodle,.noprint{display:none!important}
+  .card{border:0;padding:0} .item{break-inside:avoid}
+  .levelhero{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  details{color:#333} details>summary{list-style:none}
+}
 </style>
 </head>
 <body>
@@ -105,7 +129,13 @@ footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);display
         <button type="button" data-lang="zh" aria-pressed="true">華文題目</button>
         <button type="button" data-lang="en" aria-pressed="false">English questions</button>
       </div>
+      <div style="margin-top:22px">
+        <label data-t="settings"></label>
+        <div class="switch"><span class="lbl"><span data-t="autoRead"></span><small data-t="autoReadSub"></small></span><input type="checkbox" id="optRead" checked aria-label="auto read"></div>
+        <div class="switch"><span class="lbl"><span data-t="beep"></span><small data-t="beepSub"></small></span><input type="checkbox" id="optBeep" checked aria-label="beep"></div>
+      </div>
       <div class="row"><button class="btn block" id="toConsent" data-t="next"></button></div>
+      <p class="err" id="loginErr" role="alert"></p>
     </div>
   </section>
 
@@ -113,6 +143,7 @@ footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);display
   <section id="s-consent" class="hidden">
     <h1 data-t="consentTitle"></h1>
     <p class="lead" data-t="consentLead"></p>
+    <p class="notice" id="attemptNotice"></p>
     <div class="card">
       <ol class="rules" id="rules"></ol>
       <label class="check"><input type="checkbox" id="agree"><span data-t="agree"></span></label>
@@ -158,10 +189,22 @@ footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);display
     <h1 data-t="resultTitle"></h1>
     <p class="lead" id="resultLead"></p>
     <div class="levelhero" id="hero"></div>
-    <div class="row" style="margin:0 0 22px"><button class="btn" id="csvBtn" data-t="download"></button></div>
-    <p class="lead" data-t="moodle"></p>
+    <div class="toolbar">
+      <button class="btn" id="csvBtn" data-t="download"></button>
+      <button class="btn ghost" id="pdfBtn" data-t="pdf"></button>
+      <button class="btn ghost" id="clearBtn" data-t="clear"></button>
+      <div class="switch"><span class="lbl" data-t="showTranscript"></span><input type="checkbox" id="optTx" checked aria-label="show transcript"></div>
+    </div>
+    <p class="lead moodle" data-t="moodle"></p>
     <h2 data-t="perItem"></h2>
     <div class="card" id="items"></div>
+  </section>
+
+  <!-- 6 已清除 -->
+  <section id="s-cleared" class="hidden">
+    <h1 data-t="clearedTitle"></h1>
+    <p class="lead" data-t="clearedLead"></p>
+    <div class="row"><button class="btn" id="againBtn" data-t="backHome"></button></div>
   </section>
 
   <footer><span>Architect: Prof. Shihmin Lo</span><span>CC BY-NC-SA 4.0</span></footer>
@@ -203,8 +246,15 @@ const T={
   perItem:'逐題回饋',finalLevel:'最終程度',avg:'該程度平均',count:'該程度題數',attemptOf:'這是第 {a} 次，共 {m} 次機會。以最後一次為準。',
   concept:'概念正確',completeness:'完整性',reasoning:'推理',tip:'改進建議',transcript:'你說的內容（逐字稿）',
   levels:['基本','中階','進階'],leave:'測驗進行中。離開將算用掉一次機會。',
+  settings:'作答設定',autoRead:'自動朗讀題目',autoReadSub:'每題出現時自動唸一次；朗讀會占用準備時間',
+  beep:'倒數提示音',beepSub:'錄音開始與結束前 5 秒，每秒嗶一聲',
+  attemptsInfo:'你已使用 {u} 次，還剩 {r} 次機會。按下「開始測驗」後會再用掉一次。',
+  pdf:'存成 PDF',clear:'結束並清除',showTranscript:'顯示逐字稿',
+  clearConfirm:'確定要結束嗎？畫面上的結果與逐字稿會被清除。\n（成績已記錄在系統中；若還沒下載 CSV，請先按取消。）',
+  pdfHint:'在列印視窗中，「目的地」或「印表機」請選「另存為 PDF」。',
+  clearedTitle:'已結束並清除',clearedLead:'本次畫面資料已清除，麥克風也已關閉。你可以直接關閉這個分頁。',backHome:'回到開始畫面',
   err:{CODE_REQUIRED:'請輸入學期代碼。',CODE_NOT_FOUND:'找不到這個代碼，請確認是否輸入正確。',WINDOW_NOT_SET:'老師還沒有設定考試時段。',
-   WINDOW_NOT_OPEN:'考試時段還沒開始。',WINDOW_CLOSED:'考試時段已經結束。',NO_ATTEMPTS_LEFT:'3 次機會都已用完。',
+   WINDOW_NOT_OPEN:'考試時段還沒開始。',WINDOW_CLOSED:'考試時段已經結束。',NO_ATTEMPTS_LEFT:'你的 3 次機會都已用完，系統以最後一次成績為準。如果是系統問題造成的，請聯絡老師。',
    SESSION_CLOSED:'這一場測驗已經結束或被新的一場取代。',GRADING_FAILED:'評分服務暫時沒有回應。請按「重新送出這一題」。',
    NETWORK:'網路連線失敗。請確認網路後按「重新送出這一題」。',AUDIO_EMPTY:'沒有錄到聲音。請確認麥克風後重新送出。',
    ORIGIN_NOT_ALLOWED:'此網址未被授權連線。',DEFAULT:'發生錯誤：'}},
@@ -229,8 +279,15 @@ const T={
   perItem:'Feedback by question',finalLevel:'Final level',avg:'Average at this level',count:'Questions at this level',attemptOf:'This was attempt {a} of {m}. Your last attempt counts.',
   concept:'Concepts',completeness:'Completeness',reasoning:'Reasoning',tip:'How to improve',transcript:'What you said (transcript)',
   levels:['Basic','Intermediate','Advanced'],leave:'A test is in progress. Leaving will use up this attempt.',
+  settings:'Settings',autoRead:'Read questions aloud',autoReadSub:'Each question is read once when it appears; this uses preparation time',
+  beep:'Countdown beeps',beepSub:'One beep per second in the last 5 seconds before recording starts and ends',
+  attemptsInfo:'You have used {u} attempt(s); {r} left. Pressing “Start test” uses one more.',
+  pdf:'Save as PDF',clear:'Finish and clear',showTranscript:'Show transcripts',
+  clearConfirm:'Finish now? The results and transcripts on this screen will be cleared.\n(Your score is already recorded. If you have not downloaded the CSV, press Cancel.)',
+  pdfHint:'In the print window, choose “Save as PDF” as the destination.',
+  clearedTitle:'Finished and cleared',clearedLead:'This screen has been cleared and the microphone is off. You can close this tab.',backHome:'Back to start',
   err:{CODE_REQUIRED:'Enter your semester code.',CODE_NOT_FOUND:'Code not found. Check that it is typed correctly.',WINDOW_NOT_SET:'Your teacher has not set a test window yet.',
-   WINDOW_NOT_OPEN:'The test window has not opened yet.',WINDOW_CLOSED:'The test window has closed.',NO_ATTEMPTS_LEFT:'All 3 attempts have been used.',
+   WINDOW_NOT_OPEN:'The test window has not opened yet.',WINDOW_CLOSED:'The test window has closed.',NO_ATTEMPTS_LEFT:'All 3 attempts have been used. Your last attempt counts. If a system problem caused this, contact your teacher.',
    SESSION_CLOSED:'This test session has ended or been replaced by a newer one.',GRADING_FAILED:'The scoring service did not respond. Press “Resend this answer”.',
    NETWORK:'Network error. Check your connection, then press “Resend this answer”.',AUDIO_EMPTY:'No sound was recorded. Check your microphone and resend.',
    ORIGIN_NOT_ALLOWED:'This address is not authorised.',DEFAULT:'Error: '}}
@@ -249,7 +306,7 @@ function applyLang(){
   $('rules').innerHTML=''; t('rules').forEach(r=>{const li=document.createElement('li'); li.textContent=r; $('rules').appendChild(li);});
   if(S.q) renderQuestionText();
 }
-function show(id){['s-login','s-consent','s-mic','s-test','s-result'].forEach(s=>$(s).classList.toggle('hidden',s!==id)); window.scrollTo(0,0);}
+function show(id){['s-login','s-consent','s-mic','s-test','s-result','s-cleared'].forEach(s=>$(s).classList.toggle('hidden',s!==id)); window.scrollTo(0,0);}
 function errText(code,detail){const e=t('err'); return e[code]||(e.DEFAULT+(code||'')+(detail?' ('+detail+')':''));}
 
 /* 主題與語言 */
@@ -259,9 +316,14 @@ document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{S.lang=b.data
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>show(b.dataset.back));
 
 /* 1 → 2 */
-$('toConsent').onclick=()=>{
-  S.code=$('code').value.trim();
+$('toConsent').onclick=async()=>{
+  S.code=$('code').value.trim(); $('loginErr').textContent='';
   if(!S.code){$('code').focus(); return;}
+  $('toConsent').disabled=true;
+  const r=await api('/api/status',{code:S.code});
+  $('toConsent').disabled=false;
+  if(!r.ok){ $('loginErr').textContent=errText(r.error,r.detail); return; }   // 次數用完、時段未開等，在這裡就說明
+  $('attemptNotice').textContent=fmt(t('attemptsInfo'),{u:r.used,r:r.max-r.used});
   show('s-consent');
 };
 $('agree').onchange=e=>$('toMic').disabled=!e.target.checked;
@@ -295,6 +357,7 @@ async function api(path,body){
 /* 開始 */
 $('startBtn').onclick=async()=>{
   $('startBtn').disabled=true; $('startErr').textContent='';
+  if($('optRead').checked && 'speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }
   const r=await api('/api/start',{code:S.code,lang:S.lang});
   if(!r.ok){ $('startErr').textContent=errText(r.error,r.detail); $('startBtn').disabled=false; return; }
   S.session=r; S.inTest=true; S.results=[];
@@ -318,24 +381,35 @@ function setPhase(kind,secs){
   $('phaseSub').textContent=t(kind==='prep'?'prepSub':kind==='rec'?'recSub':'gradingSub');
   if(secs!=null) $('clock').textContent=secs;
 }
+function beep(final){
+  if(!$('optBeep').checked||!S.ctx) return;
+  const o=S.ctx.createOscillator(), g=S.ctx.createGain(); o.frequency.value=final?1320:880;
+  g.gain.setValueAtTime(0.0001,S.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.25,S.ctx.currentTime+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,S.ctx.currentTime+(final?0.35:0.12));
+  o.connect(g); g.connect(S.ctx.destination); o.start(); o.stop(S.ctx.currentTime+0.4);
+}
 function countdown(secs,onDone){
-  clearInterval(S.timer); const end=Date.now()+secs*1000;
-  S.timer=setInterval(()=>{const left=Math.max(0,Math.ceil((end-Date.now())/1000)); $('clock').textContent=left; if(left<=0){clearInterval(S.timer); onDone();}},200);
+  clearInterval(S.timer); const end=Date.now()+secs*1000; let last=null;
+  S.timer=setInterval(()=>{const left=Math.max(0,Math.ceil((end-Date.now())/1000)); $('clock').textContent=left;
+    if(left!==last){ if(left>=1&&left<=5) beep(false); last=left; }
+    if(left<=0){clearInterval(S.timer); beep(true); onDone();}},100);
 }
 function runQuestion(q){
   S.q=q; renderQuestionText(); $('testErr').textContent=''; $('retryRow').classList.add('hidden');
   $('speakBtn').classList.remove('hidden'); $('skipPrep').classList.remove('hidden'); $('stopBtn').classList.add('hidden');
   setPhase('prep',q.prep);
   countdown(q.prep,startRecording);
+  if($('optRead').checked) speakQuestion();
   $('skipPrep').onclick=()=>{clearInterval(S.timer); startRecording();};
 }
-$('speakBtn').onclick=()=>{
+$('speakBtn').onclick=()=>speakQuestion();
+function speakQuestion(){
   if(!('speechSynthesis' in window)||!S.q) return;
   speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(S.q.prompt);
   const want=S.lang==='zh'?['Yating','Mei-Jia','zh-TW']:['Daniel','en-GB'];
   const v=speechSynthesis.getVoices(); u.voice=want.map(w=>v.find(x=>x.name.includes(w)||x.lang===w)).find(Boolean)||null;
   u.lang=S.lang==='zh'?'zh-TW':'en-GB'; speechSynthesis.speak(u);
-};
+}
 function startRecording(){
   if('speechSynthesis' in window) speechSynthesis.cancel();   // 避免把朗讀錄進去
   $('speakBtn').classList.add('hidden'); $('skipPrep').classList.add('hidden'); $('stopBtn').classList.remove('hidden');
@@ -417,15 +491,30 @@ function renderResult(rep){
     });
     el.querySelector('.fb').textContent=it.feedback||'';
     const tp=el.querySelector('.tp'); const strong=document.createElement('strong'); strong.textContent=t('tip')+'：'; tp.append(strong,document.createTextNode(it.tip||''));
-    if(local.transcript){const d=document.createElement('details'); const sm=document.createElement('summary'); sm.textContent=t('transcript'); const p=document.createElement('p'); p.textContent=local.transcript; d.append(sm,p); el.appendChild(d);}
+    if(local.transcript){const d=document.createElement('details'); d.open=$('optTx').checked; d.className='tx'; const sm=document.createElement('summary'); sm.textContent=t('transcript'); const p=document.createElement('p'); p.textContent=local.transcript; d.append(sm,p); el.appendChild(d);}
     box.appendChild(el);
   });
+  $('optTx').onchange=()=>document.querySelectorAll('#items details.tx').forEach(d=>{d.open=$('optTx').checked; d.classList.toggle('noprint',!$('optTx').checked);});
+  $('pdfBtn').onclick=()=>{ alert(t('pdfHint')); document.title=`speaking-test_${rep.code}_attempt${rep.attempt}`; window.print(); };
   $('csvBtn').onclick=()=>{
     const blob=new Blob(['\uFEFF'+S.csv],{type:'text/csv;charset=utf-8'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
     a.download=`speaking-test_${rep.code}_attempt${rep.attempt}.csv`; document.body.appendChild(a); a.click(); a.remove();
   };
 }
+
+$('clearBtn').onclick=()=>{
+  if(!confirm(t('clearConfirm'))) return;
+  clearInterval(S.timer); if('speechSynthesis' in window) speechSynthesis.cancel();
+  if(S.stream) S.stream.getTracks().forEach(tr=>tr.stop());
+  if(S.ctx) S.ctx.close().catch(()=>{});
+  Object.assign(S,{code:'',session:null,q:null,stream:null,ctx:null,analyser:null,results:[],csv:'',pending:null,inTest:false});
+  $('items').innerHTML=''; $('hero').innerHTML=''; $('code').value=''; $('agree').checked=false; $('toMic').disabled=true;
+  $('micBtn').disabled=false; $('startBtn').disabled=true; $('meter').style.width='0'; $('micState').textContent='';
+  $('langBtn').disabled=false; $('optTx').checked=true; document.title='適性口說測驗 Adaptive Speaking Test';
+  show('s-cleared'); try{ window.close(); }catch(e){}
+};
+$('againBtn').onclick=()=>show('s-login');
 
 applyLang();
 </script>
